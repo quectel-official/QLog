@@ -254,11 +254,7 @@ static void *qlog_usbfs_read(void *arg)
             }
             break;
         }
-        else if (n == 0)
-        {
-            // zero length packet
-        }
-
+        
         if (n > 0)
         {
             kfifo_write(idx, pbuf, n);
@@ -299,7 +295,7 @@ ssize_t qlog_poll_read_fds(int *fds, int n, void *pbuf, size_t size, unsigned ti
         {
             qlog_dbg("poll() = %d, errno: %d (%s)\n", ret, errno, strerror(errno));
             if (ret == 0)
-                errno = ETIMEDOUT; // 1.�ֶ�����poll��ʱ
+                errno = ETIMEDOUT; 
             break;
         }
 
