@@ -1,6 +1,6 @@
-SOURCES =  main.c  mdm.c tty2tcp.c tftp.c  usb_linux.c sony.c ftp.c 
+SOURCES =  main.c mdm.c tty2tcp.c tftp.c usb_linux.c ftp.c 
 
-CFLAGS += -Wall -Werror -O1 -Wno-error=unused-but-set-variable#-s
+CFLAGS += -Wall -Werror -O1 -Wno-error=unused-but-set-variable
 LDFLAGS += -lpthread -ldl -lrt
 
 ifeq ($(CC),cc)
@@ -11,4 +11,4 @@ linux: clean
 	${CC} $(CFLAGS) $(SOURCES) -o QLog ${LDFLAGS} 
 
 clean:
-	rm -rf usbdevices *.exe *.dSYM *.obj *.exp .*o *.lib *~ libs QLog  out
+	rm -rf   *.o  *~  QLog  

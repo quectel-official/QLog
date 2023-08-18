@@ -58,7 +58,6 @@ static const char *third_logfile_suffix = NULL;
 int block_size = 16384;
 int qlog_continue = 0;
 int qlog_ignore_exx00u_ap = 0;
-int qlog_read_com_data = 0;
 int qlog_read_nmea_log = 0;
 uint32_t query_panic_addr = 0;
 char modem_name_para[32] = {0};
@@ -255,11 +254,7 @@ static void *qlog_usbfs_read(void *arg)
             }
             break;
         }
-        else if (n == 0)
-        {
-            // zero length packet
-        }
-
+        
         if (n > 0)
         {
             kfifo_write(idx, pbuf, n);
@@ -300,7 +295,7 @@ ssize_t qlog_poll_read_fds(int *fds, int n, void *pbuf, size_t size, unsigned ti
         {
             qlog_dbg("poll() = %d, errno: %d (%s)\n", ret, errno, strerror(errno));
             if (ret == 0)
-                errno = ETIMEDOUT; // 1.�ֶ�����poll��ʱ
+                errno = ETIMEDOUT; 
             break;
         }
 
@@ -341,10 +336,9 @@ ssize_t qlog_poll_write(int fd, const void *buf, size_t size, unsigned timeout_m
     size_t wc = 0;
     ssize_t nbytes;
 
-    if (!qlog_read_com_data && fd == qlog_args->fds.dm_sockets[0])
+    if (fd == qlog_args->fds.dm_sockets[0])
     {
         return ql_usbfs_write(qlog_args->fds.dm_usbfd, qlog_args->ql_dev->dm_intf.ep_out, buf, size);
-        ;
     }
 
     nbytes = write(fd, buf + wc, size - wc);
@@ -431,10 +425,12 @@ static int is_tcp_client(void)
     return (g_tcp_client_port > 0);
 }
 
+#ifdef CRASHDUMP_ENABLE
 static int qlog_is_not_dir(const char *logdir)
 {
     return (is_ftp() || is_tftp() || !strncmp(logdir, "/dev/null", strlen("/dev/null")));
 }
+#endif
 
 static const char *qlog_time_name(int type)
 {
@@ -988,20 +984,12 @@ static void qlog_usage(const char *self, const char *dev)
     qlog_dbg("    -D    Delete all log files in the logdir before catching logs\n");
     qlog_dbg("          For instance: -D (indicate delete all supportted log), -Dqmdl (only delte log with suffix *.qmdl)\n");
     qlog_dbg("    -f    filter cfg for catch log, can be found in directory 'conf'. if not set this arg, will use default filter conf\n");
-    qlog_dbg("          and UC200T&EC200T do not need filter cfg.\n");
     qlog_dbg("    -n    max num of log file to save, range is '0~512'. default is 0. 0 means no limit.\n");
     qlog_dbg("          or QLog will auto delete oldtest log file if exceed max num\n");
-    qlog_dbg("    -a    EXX00U capture blue screen dump, must to specify the gIsPanic address, like '-a 0x12345678', which can be obtained from the 8915dm_cat1.map file\n");
     qlog_dbg("    -m    max size of single log file, unit is MBytes, range is '2~512', default is 256\n");
     qlog_dbg("    -c    Determines whether to exit after QLog captures dump, default is 0, indicating exit\n");
-    qlog_dbg("    -g    For the state grid module, the module model needs to be specified, such as '-g EC200T'\n");
-    qlog_dbg("    -i    EXX00U AP log is ignored, default is 0, indicating capture\n");
-    qlog_dbg("    -t    sony BG770A-GL captures uart logs, the -t parameter must be used and the COM port must be specified by -p, like './QLog -p /dev/ttyUSB0 -t'\n");
-    qlog_dbg("          unisoc EXX00U captures uart ap logs, the -t parameter must be used , the COM port must be specified by -p and The -m parameter must be used to set the online ap log file to 10 MB, like './QLog -p /dev/ttyUSB0 -m 10 -t'\n");
-    qlog_dbg("    -x    Capture log of udx710 NMEA port\n");
     qlog_dbg("    -q    Exit after usb disconnet\n");
 
-    qlog_dbg("\nNote: For the eigen platform module, the tool needs to be run within 16 seconds after the module dumps to successfully capture the dump, otherwise the timeout fails\n");
     qlog_dbg("\nFor example: %s -s .\n", self);
 }
 
@@ -1128,19 +1116,6 @@ static struct arguments *parser_args(int argc, char **argv)
                 args.logfile_num = LOGFILE_NUM;
             s_logfile_num = args.logfile_num;
             break;
-        case 'a':
-            if (optarg == NULL)
-                goto error;
-
-            query_panic_addr = strtoul(optarg, NULL, 16);
-            qlog_dbg("query_panic_addr:0x%08x\n", query_panic_addr);
-            break;
-        case 'g':
-            if (optarg == NULL)
-                goto error;
-            snprintf(modem_name_para, sizeof(modem_name_para), "%s", optarg);
-            qlog_dbg("modem_name_para:%s\n", modem_name_para);
-            break;
         case 'm':
             if (optarg == NULL)
                 goto error;
@@ -1155,14 +1130,6 @@ static struct arguments *parser_args(int argc, char **argv)
             qlog_continue = 1;
             qlog_dbg("qlog_continue: %d\n", qlog_continue);
             break;
-        case 'i':
-            qlog_ignore_exx00u_ap = 1;
-            qlog_dbg("qlog_ignore_exx00u_ap: %d\n", qlog_ignore_exx00u_ap);
-            break;
-        case 't':
-            qlog_read_com_data = 1;
-            qlog_dbg("qlog_read_com_data: %d\n", qlog_read_com_data);
-            break;
         case 'f':
             if (optarg == NULL)
                 goto error;
@@ -1170,10 +1137,6 @@ static struct arguments *parser_args(int argc, char **argv)
             break;
         case 'q':
             exit_after_usb_disconnet = 1;
-            break;
-        case 'x':
-            qlog_read_nmea_log = 1;
-            qlog_dbg("qlog_read_nmea_log: %d\n", qlog_read_nmea_log);
             break;
         case 'h':
         default:
@@ -1524,12 +1487,6 @@ int main(int argc, char **argv)
     signal(SIGHUP, ql_sigaction);
     signal(SIGINT, ql_sigaction);
 
-    if (qlog_read_com_data)
-    {
-        qlog_com_catch_log(args->ttyDM, args->logdir, args->logfile_sz, qlog_time_name); // COM port data can only be stored locally
-        return 0;
-    }
-
     if (args->delete_logs)
         delete_logs(args->logdir, args->delete_logs);
 
@@ -1706,9 +1663,10 @@ __restart:
     }
 
     qlog_dbg("Press CTRL+C to stop catch log.\n");
+
+#ifdef CRASHDUMP_ENABLE
     if (args->ql_dev->bNumInterfaces == 1 || 
-        args->ql_dev->is_dump
-		)
+        args->ql_dev->is_dump)
     {
         int dmfd = -1;
         char dump_dir[262];
@@ -1753,7 +1711,7 @@ __restart:
         }
 
         qlog_dbg("catch dump for mdm chipset[feature disabled]\n");
-        //ret = sahara_catch_dump(dmfd, dump_dir, 1);
+        ret = sahara_catch_dump(dmfd, dump_dir, 1);
         
         if (qlog_continue && !qlog_exit_requested)
             sleep(6); // dump to normal mode need max -> 6s (EC600N-CN)
@@ -1761,6 +1719,9 @@ __restart:
             qlog_exit_requested = 1;
     }
     else if (args->ql_dev->bNumInterfaces > 1)
+#else
+    if (args->ql_dev->bNumInterfaces > 1)
+#endif
     {
         if (args->fds.dm_usbfd != -1 || args->fds.general_usbfd != -1 || args->fds.third_usbfd != -1)
             qlog_dbg("catch log via usbfs\n");
@@ -1782,7 +1743,6 @@ __restart:
         qlog_dbg("for pcie module, you need to select the correct port\n");
         goto error;
     }
-
 error:
     close_fds(args);
 
