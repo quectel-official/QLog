@@ -7,8 +7,16 @@ ifeq ($(CC),cc)
 CC=${CROSS_COMPILE}gcc
 endif
 
+OUT := qlog
+prefix := /usr/local
+
 linux: clean
-	${CC} $(CFLAGS) $(SOURCES) -o QLog ${LDFLAGS} 
+	${CC} $(CFLAGS) $(SOURCES) -o $(OUT) ${LDFLAGS}
 
 clean:
-	rm -rf   *.o  *~  QLog  
+	rm -rf   *.o  *~  $(OUT)
+
+install:
+	mkdir -p $(DESTDIR)$(prefix)/bin
+	install $(OUT) $(DESTDIR)$(prefix)/bin
+	install -m 755 $(OUT) $(DESTDIR)$(prefix)/bin
