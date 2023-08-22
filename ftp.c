@@ -112,8 +112,16 @@ int ftpcmd(const char *s1, const char *s2, int server_fd)
 
     if (s1)
     {
-        snprintf(buf, sizeof(buf), (s2 ? "%s %s\r\n" : "%s %s\r\n" + 3), s1, s2);
+        if(s2)
+        {
+            snprintf(buf, sizeof(buf), "%s %s\r\n", s1, s2);
+        }
+        else
+        {
+            snprintf(buf, sizeof(buf), "%s\r\n", s1);
+        }
         ret_ftp_write = write(server_fd, buf, strlen(buf));
+        
     }
 
     do
