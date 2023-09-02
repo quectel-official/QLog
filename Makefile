@@ -1,6 +1,7 @@
 SOURCES =  main.c mdm.c tty2tcp.c tftp.c usb_linux.c ftp.c 
 
 CFLAGS += -Wall -Werror -O1 -Wno-error=unused-but-set-variable
+CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 LDFLAGS += -lpthread -ldl -lrt
 
 ifeq ($(CC),cc)
