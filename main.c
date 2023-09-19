@@ -1605,7 +1605,7 @@ __restart:
             sleep(1);
             goto __restart;
         }
-    }    
+    }
 
     if (s_usb_device_info[cur_module].idProduct == 0x4d00 && s_usb_device_info[cur_module].idVendor == 0x1782)
     {
@@ -1679,7 +1679,7 @@ __restart:
         if (qlog_is_not_dir(args->logdir))
         {
             snprintf(dump_dir, sizeof(dump_dir), "%s", args->logdir);
-        }        
+        }
         else if (is_tty2tcp())
         {
             qlog_dbg("tty2tcp only support catch log, but modem is in ram dump state\n");
@@ -1714,7 +1714,7 @@ __restart:
             sleep(6); // dump to normal mode need max -> 6s (EC600N-CN)
         else
             qlog_exit_requested = 1;
-    }    
+    }
     else if (args->ql_dev->bNumInterfaces > 1)
     {
         if (args->fds.dm_usbfd != -1 || args->fds.general_usbfd != -1 || args->fds.third_usbfd != -1)
@@ -1747,7 +1747,7 @@ error:
     }
 
     if (is_ftp())
-        ftp_quit();    
-    
+        ftp_quit();
+
     return ret;
 }
