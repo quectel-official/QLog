@@ -36,6 +36,7 @@
 #include <dirent.h>
 #include <sys/ioctl.h>
 #include <linux/version.h>
+#include <stdbool.h>
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 20)
 #include <linux/usb/ch9.h>
 #else
@@ -98,6 +99,10 @@ extern int ftp_write_request(int index, const char *ftp_server, const char *user
 
 extern unsigned qlog_msecs(void);
 extern int qlog_avail_space_for_dump(const char *dir, long need_MB);
+
+extern bool sahara_download_dump(int fd, const char *path_to_save_files, int do_reset);
+extern void sahara_deinit();
+
 #define qlog_raw_log(fmt, arg...)                                      \
     do                                                                 \
     {                                                                  \
@@ -119,8 +124,7 @@ extern int qlog_avail_space_for_dump(const char *dir, long need_MB);
         {                                      \
         }                                      \
     } while (0)
-extern int sahara_catch_dump(int port_fd, const char *path_to_save_files, int do_reset);
-
+    
 struct ql_usb_interface_info
 {
     uint8_t bInterfaceNumber;
