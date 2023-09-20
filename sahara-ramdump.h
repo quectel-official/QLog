@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef __SAHARA_CORE_H__
-#define __SAHARA_CORE_H__
+#ifndef __SAHARA_RAMDUMP_H__
+#define __SAHARA_RAMDUMP_H__
 #define _GNU_SOURCE
 #include <linux/usbdevice_fs.h>
 #include <linux/usb/ch9.h>

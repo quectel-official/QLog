@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef __QL_SAHARA_XPRT_H__
-#define __QL_SAHARA_XPRT_H__
+#ifndef __SAHARA_XPRT_H__
+#define __SAHARA_XPRT_H__
 #define _GNU_SOURCE
 #include "sahara-ramdump.h"
 
