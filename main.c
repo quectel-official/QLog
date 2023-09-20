@@ -425,12 +425,10 @@ static int is_tcp_client(void)
     return (g_tcp_client_port > 0);
 }
 
-#ifdef CRASHDUMP_ENABLE
 static int qlog_is_not_dir(const char *logdir)
 {
     return (is_ftp() || is_tftp() || !strncmp(logdir, "/dev/null", strlen("/dev/null")));
 }
-#endif
 
 static const char *qlog_time_name(int type)
 {
@@ -976,11 +974,7 @@ static void qlog_usage(const char *self, const char *dev)
     qlog_dbg("Default: %s -p %s -s %s -n %d -b %d to save log to local disk\n",
              self, dev, ".", LOGFILE_NUM, LOGFILE_SIZE_DEFAULT / 1024 / 1024);
     qlog_dbg("    -p    The port to catch log (default '/dev/ttyUSB0')\n");
-    qlog_dbg("    -s    Dir to save log, default is '.' \n");
-    qlog_dbg("          if set as '9000', QLog will run in TCP Server Mode, and can be connected with 'QPST/QWinLog/CATStudio/Logel'!\n");
-    qlog_dbg("          if set as 'IP:9000', QLog will run in TCP Client Mode, and send log to TCP Server, like 'nc -l 9000 > log.bin' \n");
-    qlog_dbg("          if set as 'tftp:IP', QLog will run in TFTP Client Mode, and send log to TFTP Server, PC can run tftpd32/tftpd64 \n");
-    qlog_dbg("          if set as 'ftp:IP-user:xxx-pass:xxx', The maximum value of user and pass is 32 bytes, QLog will run in FTP Client Mode, and send log to FTP Server, PC can run FileZilla Server \n");
+    qlog_dbg("    -s    Dir to save log, default is '.' Use \"dump\" to collect ramdump. \n");
     qlog_dbg("    -D    Delete all log files in the logdir before catching logs\n");
     qlog_dbg("          For instance: -D (indicate delete all supportted log), -Dqmdl (only delte log with suffix *.qmdl)\n");
     qlog_dbg("    -f    filter cfg for catch log, can be found in directory 'conf'. if not set this arg, will use default filter conf\n");
@@ -1664,9 +1658,7 @@ __restart:
 
     qlog_dbg("Press CTRL+C to stop catch log.\n");
 
-#ifdef CRASHDUMP_ENABLE
-    if (args->ql_dev->bNumInterfaces == 1 || 
-        args->ql_dev->is_dump)
+    if (args->ql_dev->bNumInterfaces == 1 || args->ql_dev->is_dump)
     {
         int dmfd = -1;
         char dump_dir[262];
@@ -1710,18 +1702,20 @@ __restart:
             }
         }
 
-        qlog_dbg("catch dump for mdm chipset[feature disabled]\n");
-        ret = sahara_catch_dump(dmfd, dump_dir, 1);
+        qlog_dbg("catch dump for mdm chipset\n");
         
+        ret = sahara_download_dump(dmfd, dump_dir, 1);
+        if(ret)
+            qlog_dbg("Successfully downloaded the ramdump files.\n");
+
+        sahara_deinit();
+
         if (qlog_continue && !qlog_exit_requested)
             sleep(6); // dump to normal mode need max -> 6s (EC600N-CN)
         else
             qlog_exit_requested = 1;
     }
     else if (args->ql_dev->bNumInterfaces > 1)
-#else
-    if (args->ql_dev->bNumInterfaces > 1)
-#endif
     {
         if (args->fds.dm_usbfd != -1 || args->fds.general_usbfd != -1 || args->fds.third_usbfd != -1)
             qlog_dbg("catch log via usbfs\n");

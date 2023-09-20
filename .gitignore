@@ -1,5 +1,5 @@
 # Ignore specific file
-QLog
+qlog
 
 # Ignore all files in a directory
 qlog_files/

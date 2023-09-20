@@ -32,7 +32,10 @@ DM/AT/NMEA ports should be recognized as /dev/ttyUSB* which can be listed via co
 ====================
 - from source file folder just run "make", it will generate QLog
 
-5 Catch DM logs to local folder named /logs with filter conf/default.cfg
+5. Catch DM logs to local folder named /logs with filter conf/default.cfg
 ====================
-sudo QLog -f conf/default.cfg -s logs
+sudo ./qlog -f conf/default.cfg -s logs
 
+6. Collect ramdump
+====================
+sudo ./qlog -s dump
