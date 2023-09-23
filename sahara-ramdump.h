@@ -174,6 +174,17 @@ struct sahara_pkt
 extern uint32_t qlog_le32(uint32_t v32);
 extern uint64_t qlog_le64(uint64_t v64);
 
+typedef struct com_port {
+    long handle;
+    bool (*write)(long handle, const void *buffer, const size_t bytes_to_send);
+    bool (*read) (long handle, void *buffer, size_t bytes_to_read, size_t *bytes_read);
+
+    int rx_timeout;
+    size_t MAX_TO_READ;
+    size_t MAX_TO_WRITE;
+} com_port_t;
+
+
 /*==========================================================================
 DESCRIPTION
 
@@ -182,9 +193,6 @@ DESCRIPTION
   mode.
 
 PARAMETERS
-
-    port_fd [in]: Valid usb file descriptor of the device to read and write.
-
     path_to_save_files [in]: Path to dump the ramdump files.
 
     do_reset [in]: If the value is '1', reset will be triggered at the end 
@@ -193,7 +201,7 @@ PARAMETERS
 RETURN VALUE
     True on success, else false.
 ==========================================================================*/
-bool sahara_download_dump(int fd, const char *path_to_save_files, int do_reset);
+bool sahara_download_dump(const char *path_to_save_files, int do_reset);
 
 /*==========================================================================
 DESCRIPTION

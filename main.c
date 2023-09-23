@@ -1232,6 +1232,7 @@ static int prepare(struct arguments *args)
     if (usb_dev->ttyDM[0] && !force_use_usbfs)
     {
         args->fds.dm_ttyfd = serial_open(usb_dev->ttyDM);
+
         if (args->fds.dm_ttyfd < 0)
         {
             qlog_dbg("tty open %s failed, errno: %d (%s)\n", usb_dev->ttyDM, errno, strerror(errno));
@@ -1461,6 +1462,39 @@ static void delete_logs(const char *dir, const char *suffix)
     closedir(dirptr);
 }
 
+
+
+bool sahara_usbfs_write(long handle, const void *buffer, const size_t bytes_to_send)
+{
+    struct arguments *args = (struct arguments *)handle;
+
+    if (ql_usbfs_write(args->fds.dm_usbfd, args->ql_dev->dm_intf.ep_out, buffer, bytes_to_send) == bytes_to_send)
+        return true;
+    else 
+        return false;
+}
+
+
+
+bool sahara_usbfs_read(long handle, void *buffer, size_t bytes_to_read, size_t *bytes_read)
+{
+    int n;
+
+    struct arguments *args = (struct arguments *)handle;
+    n = qlog_poll_read_fds(&args->fds.dm_sockets[0], 1, buffer, bytes_to_read, 5);
+
+    if (n < 0)
+    {
+        *bytes_read = 0;
+        return false;
+    }
+    else 
+    {
+        *bytes_read = n;
+        return true;
+    }
+}
+
 int main(int argc, char **argv)
 {
     int ret = -1;
@@ -1660,19 +1694,7 @@ __restart:
 
     if (args->ql_dev->bNumInterfaces == 1 || args->ql_dev->is_dump)
     {
-        int dmfd = -1;
         char dump_dir[262];
-
-        if (args->fds.dm_ttyfd != -1)
-        {
-            dmfd = args->fds.dm_ttyfd;
-        }
-        else if (args->fds.dm_sockets[0] != -1)
-        {
-            dmfd = args->fds.dm_sockets[0];
-        }
-        else
-            goto error;
 
         s_logfile_List[s_logfile_idx][0] = '\0'; // to prevent this log delete, log before dump
 
@@ -1703,8 +1725,23 @@ __restart:
         }
 
         qlog_dbg("catch dump for mdm chipset\n");
+
+        if (args->fds.dm_sockets[0] != -1) // usbfs
+        {
+            ret = sahara_init_xprt_ext((long)args, sahara_usbfs_write, sahara_usbfs_read);
+        }
+        else if (args->fds.dm_ttyfd != -1) // typical file operation
+        {
+            ret = sahara_init_xprt((long)args->fds.dm_ttyfd);
+        }
+
+        if (!ret)
+        {
+            qlog_dbg("Failed to initialize sahara transport.");  
+            return false;
+        } 
         
-        ret = sahara_download_dump(dmfd, dump_dir, 1);
+        ret = sahara_download_dump(dump_dir, 1);
         if(ret)
             qlog_dbg("Successfully downloaded the ramdump files.\n");
 

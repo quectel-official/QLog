@@ -222,7 +222,7 @@ void sahara_deinit()
     }
 }
 
-bool sahara_download_dump(int fd, const char *path_to_save_files, int do_reset)
+bool sahara_download_dump(const char *path_to_save_files, int do_reset)
 {
     int i;
     int nBytes = 0;    
@@ -255,15 +255,7 @@ bool sahara_download_dump(int fd, const char *path_to_save_files, int do_reset)
         dbg( "Failed to allocate misc buffer memory.");  
         return false;
     }
-    struct dload_debug_type_64bit *sahara_memory_table = (struct dload_debug_type_64bit *)misc_buffer;
-
-    //Initialize the transport for sahara protocol. 
-    //Transport layer is responsible for receiving and transmitting the sahara packets to/from the device.
-    if(!sahara_init_xprt(fd))
-    {
-        dbg( "Failed to initialize sahara transport.");  
-        return false;
-    }      
+    struct dload_debug_type_64bit *sahara_memory_table = (struct dload_debug_type_64bit *)misc_buffer;     
 
     while(1)
     {
