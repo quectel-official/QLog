@@ -115,7 +115,7 @@ static bool is_valid_memory_table(uint64_t memory_table_size)
 
 static bool send_memory_read_packet(struct sahara_pkt *ppkt, uint64_t memory_table_address, uint64_t memory_table_length)
 {
-    dbg("SENDING -->  SAHARA_MEMORY_READ, address 0x%08"PRIX64", length 0x%08"PRIX64, memory_table_address, memory_table_length);
+    // dbg("SENDING -->  SAHARA_MEMORY_READ, address 0x%08"PRIX64", length 0x%08"PRIX64, memory_table_address, memory_table_length);
 
     if (true == ram_dump_64bit)
     {
@@ -181,10 +181,10 @@ static void time_throughput_calculate(struct timeval *start_time, struct timeval
     TP = (double)result.tv_usec / 1000000.0;
     TP += (double)result.tv_sec;
 
-    if (TP > 0.0)
+    if (TP > 0.0 && size_bytes > (1024 * 1024))
     {
         TP = (double)((double)size_bytes / TP) / (1024.0 * 1024.0);
-        dbg("%zd bytes transferred in %ld.%06ld seconds (%.4fMBps)", size_bytes, result.tv_sec, result.tv_usec, TP);
+        dbg("%.4f   transferred in %ld.%06ld seconds (%.4fMBps)", (double)size_bytes / 1024 / 1024, result.tv_sec, result.tv_usec, TP);
     }
     else
         dbg("%zd bytes transferred in %ld.%06ld seconds", size_bytes, result.tv_sec, result.tv_usec);
@@ -282,7 +282,7 @@ bool sahara_download_dump(const char *path_to_save_files, int do_reset)
                 //Check if we received hello packet or not.
                 if (qlog_le32(pkt.cmd) != 0x01)
                 {
-                    dbg("Received a different command: %x while waiting for hello packet \n Bytes received %d\n", pkt.cmd, nBytes);
+                    dbg("Received a different command: %x while waiting for hello packet\n", pkt.cmd);
                     if (false == send_reset_command())
                     {
                         dbg("Failed to send reset command");
@@ -509,7 +509,7 @@ bool sahara_download_dump(const char *path_to_save_files, int do_reset)
                     gettimeofday(&time_start, NULL);
 
                     // Determine the memory location and length to receive based on entires in memory region table.
-                    dbg("file: %s size:%lu", full_filename, sahara_memory_table[i].length);
+                    // dbg("file: %s size:%lu", full_filename, sahara_memory_table[i].length);
                     while (cur < sahara_memory_table[i].length)
                     {
                         //Calculate the length of memory region.
@@ -522,8 +522,7 @@ bool sahara_download_dump(const char *path_to_save_files, int do_reset)
 
                         // send memroy read request command to the device to read that memory region.
                         memset(&pkt, 0x0, sizeof(struct sahara_pkt));   
-                        bool retval = send_memory_read_packet(&pkt, sahara_memory_table[i].mem_base + cur, len);
-                        if (false == retval)
+                        if (false == send_memory_read_packet(&pkt, sahara_memory_table[i].mem_base + cur, len))
                         {
                             dbg("send_memory_read_packet failed: %s", strerror(errno));
                             close(fd);
@@ -532,8 +531,7 @@ bool sahara_download_dump(const char *path_to_save_files, int do_reset)
 
                         //Now we are ready to read the actual memory region. Lets read the raw buffer.
                         memset(buffer, 0 , QUEC_MAX_RAW_BUFFER_SIZE);
-                        retval = sahara_rx_blockdata(buffer, (size_t)len);
-                        if (false == retval)
+                        if (false == sahara_rx_blockdata(buffer, (size_t)len))
                         {
                             if (max_ram_dump_read > (16 * 1024))
                             {
@@ -546,28 +544,28 @@ bool sahara_download_dump(const char *path_to_save_files, int do_reset)
                         }
 
                         cur += len;
-                        dbg("Received %lu of 0x%08"PRIX64" bytes", cur, sahara_memory_table[i].length);
+                        // dbg("Received %lu of 0x%08"PRIX64" bytes", cur, sahara_memory_table[i].length);
 
                         //Dump the buffer into a file.
-                        retval = write(fd, buffer, len);
-                        if (retval <= 0)
+                        nBytes = write(fd, buffer, len);
+                        if (nBytes <= 0)
                         {
                             dbg("file write failed: %s", strerror(errno));
                             close(fd);
                             return false;
                         }
                         
-                        if ((uint32_t)retval != len)
+                        if (nBytes != len)
                         {
-                            dbg("Wrote only %d of 0x%08"PRIX64" bytes", retval, len);
+                            dbg("Wrote only %d of 0x%08"PRIX64" bytes", nBytes, len);
                         }
                     }
 
                     kickstart_options.verbose = 1;
-                    dbg("Received file '%s'", sahara_memory_table[i].filename);
                     close(fd);
                     gettimeofday(&time_end, NULL);
                     time_throughput_calculate(&time_start, &time_end, sahara_memory_table[i].length);
+                    dbg("Received file '%s'", sahara_memory_table[i].filename);
                 }
 
                 // Reset the device if required.

@@ -1481,7 +1481,7 @@ bool sahara_usbfs_read(long handle, void *buffer, size_t bytes_to_read, size_t *
     int n;
 
     struct arguments *args = (struct arguments *)handle;
-    n = qlog_poll_read_fds(&args->fds.dm_sockets[0], 1, buffer, bytes_to_read, 5);
+    n = qlog_poll_read_fds(&args->fds.dm_sockets[0], 1, buffer, bytes_to_read, 1000);
 
     if (n < 0)
     {

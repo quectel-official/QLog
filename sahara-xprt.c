@@ -288,7 +288,7 @@ bool sahara_tx_data (const struct sahara_pkt *pkt)
         return false;
     }
 
-    print_hex_dump("--> SAHARA PKT", pkt, pkt->length);
+    // print_hex_dump("--> SAHARA PKT", pkt, pkt->length);
     return com_port.write(com_port.handle, pkt, pkt->length);
 }
 
