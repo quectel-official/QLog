@@ -100,8 +100,14 @@ extern int ftp_write_request(int index, const char *ftp_server, const char *user
 extern unsigned qlog_msecs(void);
 extern int qlog_avail_space_for_dump(const char *dir, long need_MB);
 
-extern bool sahara_download_dump(int fd, const char *path_to_save_files, int do_reset);
+extern bool sahara_download_dump(const char *path_to_save_files, int do_reset);
 extern void sahara_deinit();
+extern bool sahara_init_xprt_ext(long handle,
+    bool (*port_write)(long, const void *, const size_t),
+    bool (*port_read) (long, void *, size_t, size_t *)
+);
+
+bool sahara_init_xprt(long fd);
 
 #define qlog_raw_log(fmt, arg...)                                      \
     do                                                                 \

@@ -33,7 +33,12 @@ PARAMETERS
 RETURN VALUE
     True on success, else false.
 ==========================================================================*/
-bool sahara_init_xprt(const int port_fd);
+bool sahara_init_xprt(long port_fd);
+
+bool sahara_init_xprt_ext(long handle,
+    bool (*port_write)(long, const void *, const size_t),
+    bool (*port_read) (long, void *, size_t, size_t *)
+);
 
 /*==========================================================================
 DESCRIPTION
