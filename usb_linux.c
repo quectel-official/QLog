@@ -380,10 +380,18 @@ int ql_find_quectel_modules(void)
             {
                 if (ql_dev.bNumInterfaces > 4)
                 {
+                    /*
+                     *  These products are secureboot enabled since 2023/10.
+                     *  Secureboot disables log captured through QDSS and APDL interface.
+                     *  Just remove the settings of QDSS and APDL.
+                     *  ALl logs are captured through DM interface.
+                     */
+                    #if 0
                     ql_dev.general_intf.bInterfaceNumber = 6; // qdss_intf
                     ql_dev.general_type = MDM_QDSS;
                     ql_dev.third_intf.bInterfaceNumber = 7; // third_intf
                     ql_dev.third_type = 1;
+                    #endif
                 }
                 else if (ql_dev.bNumInterfaces == 4)
                     ql_dev.is_dump = 1;
