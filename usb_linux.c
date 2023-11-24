@@ -24,6 +24,7 @@ extern char g_platform_choice[16];
 extern int qlog_ignore_exx00u_ap;
 extern char modem_name_para[32];
 extern int qlog_read_nmea_log;
+extern int secboot_debug_mode;
 
 struct ql_usb_device_info s_usb_device_info[MAX_USB_DEV];
 
@@ -378,20 +379,21 @@ int ql_find_quectel_modules(void)
                 ql_dev.idProduct == 0x6008 ||
                 ql_dev.idProduct == 0x6009)
             {
-                if (ql_dev.bNumInterfaces > 4)
+                if (ql_dev.bNumInterfaces > 7)
                 {
                     /*
                      *  These products are secureboot enabled since 2023/10.
                      *  Secureboot disables log captured through QDSS and APDL interface.
-                     *  Just remove the settings of QDSS and APDL.
-                     *  ALl logs are captured through DM interface.
+					 *  if `secboot_debug_mode` is not set, just remove the settings of QDSS and APDL,
+                     *  all logs are captured through DM interface.
                      */
-                    #if 0
-                    ql_dev.general_intf.bInterfaceNumber = 6; // qdss_intf
-                    ql_dev.general_type = MDM_QDSS;
-                    ql_dev.third_intf.bInterfaceNumber = 7; // third_intf
-                    ql_dev.third_type = 1;
-                    #endif
+                    if (secboot_debug_mode)  // false by default
+                    {
+                        ql_dev.general_intf.bInterfaceNumber = 6; // qdss_intf
+                        ql_dev.general_type = MDM_QDSS;
+                        ql_dev.third_intf.bInterfaceNumber = 7; // third_intf
+                        ql_dev.third_type = 1;
+                    }
                 }
                 else if (ql_dev.bNumInterfaces == 4)
                     ql_dev.is_dump = 1;

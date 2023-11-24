@@ -38,6 +38,7 @@ static unsigned exit_after_usb_disconnet = 0;
 int use_qmdl2_v2 = 0;
 int use_diag_qdss = 0;
 int use_diag_dpl = 0;
+int secboot_debug_mode = 0;
 int disk_file_fd = -1;
 unsigned g_rx_log_count = 0;
 int g_is_qualcomm_chip = 0;
@@ -66,6 +67,7 @@ uint8_t dpl_version = 4;
 static int qlog_abnormal_exit = 0;
 int modem_is_pcie = 0;
 int g_qualcomm_log_type = 0; // 0 ~ CP DIAG, 1 ~ QDSS, 2 ~ ADPL
+
 
 #define safe_close_fd(_fd)   \
     do                       \
@@ -983,6 +985,7 @@ static void qlog_usage(const char *self, const char *dev)
     qlog_dbg("    -m    max size of single log file, unit is MBytes, range is '2~512', default is 256\n");
     qlog_dbg("    -c    Determines whether to exit after QLog captures dump, default is 0, indicating exit\n");
     qlog_dbg("    -q    Exit after usb disconnet\n");
+    qlog_dbg("    -e    enable qdss and apdl for sdx12 secureboot module\n");
 
     qlog_dbg("\nFor example: %s -s .\n", self);
 }
@@ -1066,7 +1069,7 @@ static struct arguments *parser_args(int argc, char **argv)
     };
 
     optind = 1; // call by popen(), optind mayby is not 1
-    while (-1 != (opt = getopt(argc, argv, "p:s:n:a:g:m:f:D::citqxh")))
+    while (-1 != (opt = getopt(argc, argv, "p:s:n:a:g:m:f:D::citqxhe")))
     {
         switch (opt)
         {
@@ -1132,6 +1135,9 @@ static struct arguments *parser_args(int argc, char **argv)
         case 'q':
             exit_after_usb_disconnet = 1;
             break;
+		case 'e':
+			secboot_debug_mode = 1;
+			break;
         case 'h':
         default:
             qlog_usage(argv[0], "/dev/ttyUSB0");
