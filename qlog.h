@@ -54,7 +54,7 @@ typedef unsigned int uint32_t;
 
 typedef struct
 {
-    int (*init_filter)(int fd, const char *conf);
+    int (*init_filter)(int fd, const char *conf, int built_in_filter_index);
     int (*clean_filter)(int fd);
     int (*logfile_create)(const char *logfile_dir, const char *logfile_suffix, unsigned logfile_seq);
     int (*logfile_init)(int logfd, unsigned logfile_seq);
