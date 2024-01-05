@@ -38,6 +38,7 @@ static unsigned exit_after_usb_disconnet = 0;
 int use_qmdl2_v2 = 0;
 int use_diag_qdss = 0;
 int use_diag_dpl = 0;
+int secboot_debug_mode = 0;
 int disk_file_fd = -1;
 unsigned g_rx_log_count = 0;
 int g_is_qualcomm_chip = 0;
@@ -67,6 +68,7 @@ static int qlog_abnormal_exit = 0;
 int modem_is_pcie = 0;
 int g_qualcomm_log_type = 0; // 0 ~ CP DIAG, 1 ~ QDSS, 2 ~ ADPL
 
+
 #define safe_close_fd(_fd)   \
     do                       \
     {                        \
@@ -83,6 +85,7 @@ typedef struct
     const qlog_ops_t *ops;
     int fd;
     const char *filter;
+    int built_in_filter_index;
 } init_filter_cfg_t;
 
 typedef struct
@@ -123,6 +126,7 @@ struct arguments
     int logfile_num;
     int logfile_sz;
     const char *filter_cfg;
+    int built_in_filter_index;
     const char *delete_logs; // Remove all logfiles in the logdir before catching logs
 
     const struct ql_usb_device_info *ql_dev;
@@ -678,7 +682,7 @@ static void *qlog_logfile_init_filter_thread(void *arg)
     init_filter_cfg_t *cfg = (init_filter_cfg_t *)arg;
 
     if (cfg && cfg->ops && cfg->ops->init_filter)
-        cfg->ops->init_filter(cfg->fd, cfg->filter);
+        cfg->ops->init_filter(cfg->fd, cfg->filter, cfg->built_in_filter_index);
 
     qlog_dbg("qlog_init_filter_finished\n");
     return NULL;
@@ -791,6 +795,7 @@ static int qlog_handle(const struct arguments *args)
     init_filter_cfg.ops = &qlog_ops;
     init_filter_cfg.fd = dmfd;
     init_filter_cfg.filter = filter_cfg;
+	init_filter_cfg.built_in_filter_index = args->built_in_filter_index;
     if (pthread_create(&init_filter_tid, NULL, qlog_logfile_init_filter_thread, (void *)&init_filter_cfg))
     {
         qlog_dbg("Fail to create init_filter_thread, errno: %d (%s)\n", errno, strerror(errno));
@@ -983,6 +988,8 @@ static void qlog_usage(const char *self, const char *dev)
     qlog_dbg("    -m    max size of single log file, unit is MBytes, range is '2~512', default is 256\n");
     qlog_dbg("    -c    Determines whether to exit after QLog captures dump, default is 0, indicating exit\n");
     qlog_dbg("    -q    Exit after usb disconnet\n");
+    qlog_dbg("    -e    enable qdss and apdl for sdx12 secureboot module\n");
+    qlog_dbg("    -b    [0, 1]. select built-in filter cfg\n");
 
     qlog_dbg("\nFor example: %s -s .\n", self);
 }
@@ -1063,10 +1070,11 @@ static struct arguments *parser_args(int argc, char **argv)
         .logfile_sz = LOGFILE_SIZE_DEFAULT,
         .delete_logs = NULL, // Do not remove logs
         .filter_cfg = NULL,
+        .built_in_filter_index = 0,
     };
 
     optind = 1; // call by popen(), optind mayby is not 1
-    while (-1 != (opt = getopt(argc, argv, "p:s:n:a:g:m:f:D::citqxh")))
+    while (-1 != (opt = getopt(argc, argv, "p:s:n:a:g:m:f:D::b:citqxhe")))
     {
         switch (opt)
         {
@@ -1132,6 +1140,18 @@ static struct arguments *parser_args(int argc, char **argv)
         case 'q':
             exit_after_usb_disconnet = 1;
             break;
+		case 'e':
+			secboot_debug_mode = 1;
+			break;
+		case 'b':
+            if (strcmp(optarg,  "1") == 0)
+                args.built_in_filter_index = 1;
+            else if (strcmp(optarg,  "0") == 0)
+                args.built_in_filter_index = 0;
+            else 
+                goto error;
+
+			break;
         case 'h':
         default:
             qlog_usage(argv[0], "/dev/ttyUSB0");
@@ -1139,7 +1159,10 @@ static struct arguments *parser_args(int argc, char **argv)
         }
     }
 
-    qlog_dbg("will use filter file: %s\n", args.filter_cfg ? args.filter_cfg : "default filter");
+    if (args.filter_cfg)
+        qlog_dbg("will use filter file: %s\n", args.filter_cfg);
+    else 
+        qlog_dbg("will use filter file: built-in filter %d\n", args.built_in_filter_index);
 
     return &args;
 error:

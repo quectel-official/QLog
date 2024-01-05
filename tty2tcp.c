@@ -440,7 +440,7 @@ static void *tcp_sock_read_Loop(void *arg)
     return NULL;
 }
 
-static int tty2tcp_init_filter(int ttyfd, const char *cfg)
+static int tty2tcp_init_filter(int ttyfd, const char *cfg, int built_in_filter_index)
 {
     pthread_t tid;
     pthread_attr_t attr;
