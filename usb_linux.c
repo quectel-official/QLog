@@ -305,6 +305,7 @@ int ql_find_quectel_modules(void)
             || (ql_dev.idVendor == 0x3c93 && ql_dev.idProduct == 0xffff)                                                             // GW qualcomm
             || (ql_dev.idVendor == 0x2c7c && ql_dev.idProduct == 0x6008)                                                             // SDX12-EM061KGL
             || (ql_dev.idVendor == 0x2c7c && ql_dev.idProduct == 0x6009)                                                             // SDX12-EM061KGL
+            || (ql_dev.idVendor == 0x3731 && ql_dev.idProduct == 0x0100)                                                             // NetPrisma LCUK54-WWD
             || (ql_dev.idVendor == 0x2c7c && (ql_dev.idProduct & 0xF000) == 0x0000)))
         {
             continue;
@@ -340,7 +341,8 @@ int ql_find_quectel_modules(void)
                 ql_dev.general_type = MDM_QDSS;
                 g_is_qualcomm_chip = 1; // USB qdss log to pc
             }
-            else if (ql_dev.idVendor == 0x2c7c && (ql_dev.idProduct & 0xF000) == 0x0000)
+            else if ((ql_dev.idVendor == 0x3731 && ql_dev.idProduct == 0x0100)
+                ||(ql_dev.idVendor == 0x2c7c && (ql_dev.idProduct & 0xF000) == 0x0000))
             {                                              // mdm
                 ql_dev.general_intf.bInterfaceNumber = 12; // qdss_intf
                 ql_dev.general_type = MDM_QDSS;
@@ -371,13 +373,15 @@ int ql_find_quectel_modules(void)
             || (ql_dev.idVendor == 0x2c7c && ql_dev.idProduct == 0x0309)  // EM05E-EDU          Laptop
             || (ql_dev.idVendor == 0x2c7c && ql_dev.idProduct == 0x6008)  // SDX12-EM061KGL     Laptop
             || (ql_dev.idVendor == 0x2c7c && ql_dev.idProduct == 0x6009)  // SDX12-EM061KGL     Laptop
-            || (ql_dev.idVendor == 0x2c7c && ql_dev.idProduct == 0x030d)) // EM05G-FCCL         Laptop
+            || (ql_dev.idVendor == 0x2c7c && ql_dev.idProduct == 0x030d)  // EM05G-FCCL         Laptop
+            || (ql_dev.idVendor == 0x3731 && ql_dev.idProduct == 0x0100)) // NetPrisma LCUK54-WWD
         {
             ql_dev.dm_intf.bInterfaceNumber = 3;
 
             if (ql_dev.idProduct == 0x0128 ||
                 ql_dev.idProduct == 0x6008 ||
-                ql_dev.idProduct == 0x6009)
+                ql_dev.idProduct == 0x6009 ||
+                ql_dev.idProduct == 0x0100)
             {
                 if (ql_dev.bNumInterfaces > 7)
                 {
