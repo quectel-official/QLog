@@ -184,10 +184,10 @@ static void time_throughput_calculate(struct timeval *start_time, struct timeval
     if (TP > 0.0 && size_bytes > (1024 * 1024))
     {
         TP = (double)((double)size_bytes / TP) / (1024.0 * 1024.0);
-        dbg("%.4f   transferred in %ld.%06ld seconds (%.4fMBps)", (double)size_bytes / 1024 / 1024, result.tv_sec, result.tv_usec, TP);
+        dbg("%.4f   transferred in %lld.%06lld seconds (%.4fMBps)", (double)size_bytes / 1024 / 1024, result.tv_sec, result.tv_usec, TP);
     }
     else
-        dbg("%zd bytes transferred in %ld.%06ld seconds", size_bytes, result.tv_sec, result.tv_usec);
+        dbg("%zd bytes transferred in %lld.%06lld seconds", size_bytes, result.tv_sec, result.tv_usec);
 }
 
 static bool send_reset_command()

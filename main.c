@@ -1046,8 +1046,8 @@ static void parser_ftp(const char *str)
         static char g_ftp_server_pass_temp[32] = {0};
         char *buf_temp1 = NULL;
         char *buf_temp2 = NULL;
-        buf_temp1 = strstr(str, "user:");
-        buf_temp2 = strstr(str, "pass:");
+        buf_temp1 = strstr((char*)str, "user:");
+        buf_temp2 = strstr((char*)str, "pass:");
         if (!buf_temp1 || !buf_temp2)
             exit(1);
 
@@ -1723,7 +1723,7 @@ __restart:
 
         if (qlog_is_not_dir(args->logdir))
         {
-            snprintf(dump_dir, sizeof(dump_dir), "%s", args->logdir);
+            snprintf(dump_dir, sizeof(dump_dir), "%.255s", args->logdir);
         }
         else if (is_tty2tcp())
         {
